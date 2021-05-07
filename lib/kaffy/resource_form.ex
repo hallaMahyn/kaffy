@@ -29,7 +29,7 @@ defmodule Kaffy.ResourceForm do
         )
 
       true ->
-        build_html_input(resource[:schema], form, {field, options}, type, [])
+        build_html_input(resource[:schema], form, field, type, [])
     end
   end
 
@@ -61,24 +61,37 @@ defmodule Kaffy.ResourceForm do
       !is_nil(choices) ->
         select(form, field, choices, class: "custom-select")
 
+      type == :image ->
+        build_image_preview(changeset.data, options)
+
+      type == :html ->
+        build_custom_html(changeset.data, options)
+
       true ->
-        build_html_input(
-          changeset.data,
-          form,
-          {field, options},
-          type,
-          opts,
-          permission == :readonly
-        )
+        build_html_input(changeset.data, form, field, type, opts, permission == :readonly)
     end
   end
 
-  def form_field(changeset, form, {field, options}, opts) do
+  def form_field(changeset, form, field, opts) do
     type = Kaffy.ResourceSchema.field_type(changeset.data.__struct__, field)
-    build_html_input(changeset.data, form, {field, options}, type, opts)
+    build_html_input(changeset.data, form, field, type, opts)
   end
 
-  defp build_html_input(schema, form, {field, options}, type, opts, readonly \\ false) do
+  defp build_image_preview(data, opts) do
+    url = extract_value(data, opts)
+    content_tag :img, "", src: url, style: Map.get(opts, :inline_css)
+  end
+
+  defp build_custom_html(data, opts) do
+    value = extract_value(data, opts)
+    {:safe, value}
+  end
+
+  defp extract_value(data, %{value_fn: fun}) when is_function(fun), do: fun.(data)
+  defp extract_value(_data, %{value: value}), do: value
+  defp extract_value(_data, _), do: raise (":value or :value_fn is missing")
+
+  defp build_html_input(schema, form, field, type, opts, readonly \\ false) do
     data = schema
     {conn, opts} = Keyword.pop(opts, :conn)
     opts = Keyword.put(opts, :readonly, readonly)
@@ -98,7 +111,7 @@ defmodule Kaffy.ResourceForm do
                 [
                   [
                     form_label(fp, f),
-                    form_field(embed_changeset, fp, {f, options}, class: "form-control")
+                    form_field(embed_changeset, fp, f, class: "form-control")
                   ]
                   | all
                 ]
@@ -146,7 +159,7 @@ defmodule Kaffy.ResourceForm do
         [
           {:safe, ~s(<div class="custom-control custom-checkbox">)},
           checkbox(form, field, checkbox_opts),
-          label(form, field, form_label_string({field, options}), label_opts),
+          label(form, field, label_opts),
           {:safe, "</div>"}
         ]
 
@@ -157,7 +170,7 @@ defmodule Kaffy.ResourceForm do
         [
           {:safe, ~s(<div class="custom-control custom-switch">)},
           checkbox(form, field, checkbox_opts),
-          label(form, field, form_label_string({field, options}), label_opts),
+          label(form, field, label_opts),
           {:safe, "</div>"}
         ]
 
