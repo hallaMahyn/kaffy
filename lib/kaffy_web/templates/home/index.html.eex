@@ -17,6 +17,7 @@
 
     <div class="row mt-3">
         <div class="col-md-12 text-center">
+            <h4>weererrrererrrererrrererererererrerere.</h4>
             <h4>A powerfully simple admin package for phoenix applications.</h4>
             <h4>You can add widgets to this page by defining <code>widgets/2</code> in your admin modules.</h4>
         </div>
