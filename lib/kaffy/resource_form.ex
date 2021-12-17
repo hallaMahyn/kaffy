@@ -138,7 +138,12 @@ defmodule Kaffy.ResourceForm do
 
       :richtext ->
         opts = Keyword.put(opts, :class, "kaffy-editor")
-        textarea(form, field, opts)
+
+        [
+          {:safe, ~s(<div class="kaffy-editor-wrapper" id="kaffy-editor#{field}">)},
+           textarea(form, field, opts),
+          {:safe, "</div>"}
+        ]
 
       :textarea ->
         textarea(form, field, opts)
